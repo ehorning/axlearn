@@ -86,14 +86,21 @@ ENTRYPOINT ["/opt/apache/beam/boot"]
 
 FROM base AS tpu
 
-RUN apt-get install -y google-perftools
+RUN apt update -y && apt-get install -y google-perftools && \
+    rm -rf /var/lib/apt/lists/*
 
 # TODO(markblee): Support extras.
-ENV PIP_FIND_LINKS=https://storage.googleapis.com/jax-releases/libtpu_releases.html
 # Ensure we install the TPU version, even if building locally.
 # Jax will fallback to CPU when run on a machine without TPU.
+ENV PIP_FIND_LINKS=https://storage.googleapis.com/jax-releases/libtpu_releases.html
+
+COPY pyproject.toml .
 RUN pip install .[core,tpu]
-ENV LIB_TPU_DATE=20241008
+
+# RUN pip install -U --pre libtpu-nightly requests \
+#     -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html \
+#     -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
+ENV LIB_TPU_DATE=20240912
 COPY *${LIB_TPU_DATE}*.whl .
 RUN pip install *$LIB_TPU_DATE*.whl
 COPY . .
