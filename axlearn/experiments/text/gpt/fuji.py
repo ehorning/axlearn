@@ -256,7 +256,7 @@ def get_trainer_kwargs(
                                 remat_policies={
                                     "model.decoder.transformer.layer": RematSpec(
                                         prevent_cse=True,
-                                        policy=jax_remat_policies.everything_saveable,
+                                        policy=jax_remat_policies.nothing_saveable,
                                     ),
                                 }
                             ),
