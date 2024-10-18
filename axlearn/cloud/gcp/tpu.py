@@ -716,9 +716,9 @@ def infer_tpu_workers(tpu_type: str) -> int:
     try:
         if match is not None:
             tpu_version, tpu_cores = match.groups()
-            if tpu_version in {"v3", "v4", "v5p", "v6e"}:
+            if tpu_version in {"v3", "v4", "v5p"}:
                 return int(tpu_cores) // 8
-            if tpu_version in {"v5litepod"}:
+            if tpu_version in {"v5litepod", "v6e"}:
                 return int(tpu_cores) // 4
     except Exception as e:  # pylint: disable=broad-except
         logging.error("Failed to parse tpu_type %s: %s", tpu_type, e)
