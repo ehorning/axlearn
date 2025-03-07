@@ -780,6 +780,7 @@ class A3UltraReplicatedJob(GPUReplicatedJob):
             # https://github.com/AI-Hypercomputer/gpu-recipes/blob/dc6ef1afc1492f05e5741356f00cf645a9f1b795/src/helm-charts/a3ultra/maxtext-training/templates/maxtext-configmap.yaml#L26-L38
             "--xla_gpu_enable_latency_hiding_scheduler=true",
             "--xla_gpu_enable_triton_gemm=false",
+            # "--xla_gpu_experimental_enable_triton_softmax_priority_fusion=true",
             "--xla_gpu_graph_level=0",
             "--xla_gpu_all_reduce_combine_threshold_bytes=2147483648",
             "--xla_gpu_all_gather_combine_threshold_bytes=2147483648",
