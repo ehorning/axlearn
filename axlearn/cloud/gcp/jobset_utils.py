@@ -540,15 +540,15 @@ class TPUReplicatedJob(BaseReplicatedJob):
             labels.update({"bastion-tier": "reserved"})
         else:
             logging.info("Found tier=%s in env. Using spot quota", tier)
-            selector.update({"cloud.google.com/gke-spot": "true"})
-            tolerations.append(
-                {
-                    "key": "cloud.google.com/gke-spot",
-                    "operator": "Equal",
-                    "value": "true",
-                    "effect": "NoSchedule",
-                }
-            )
+            # selector.update({"cloud.google.com/gke-spot": "true"})
+            # tolerations.append(
+            #    {
+            #        "key": "cloud.google.com/gke-spot",
+            #        "operator": "Equal",
+            #        "value": "true",
+            #        "effect": "NoSchedule",
+            #    }
+            # )
             labels.update({"bastion-tier": "spot"})
 
         if cfg.enable_tpu_ici_resiliency is not None:
@@ -577,7 +577,7 @@ class TPUReplicatedJob(BaseReplicatedJob):
                     # the original jobset attempts to restart (node pool conflict). This is more
                     # reliable at the moment but doesn't take advantage of node pool sharing. GCP is
                     # working on a fix.
-                    "provisioner-nodepool-id": cfg.name,
+                    # "provisioner-nodepool-id": cfg.name,
                 }
             )
 
@@ -916,6 +916,7 @@ class A3ReplicatedJob(BaseReplicatedJob):
                 initContainers=init_containers,
                 hostNetwork=True,
                 dnsPolicy="ClusterFirstWithHostNet",
+                priorityClassName="very-high",
                 containers=containers,
                 serviceAccountName=cfg.service_account,
                 volumes=volumes,
