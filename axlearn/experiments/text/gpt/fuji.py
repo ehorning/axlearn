@@ -15,6 +15,7 @@ import functools
 import itertools
 from typing import Any, List, NamedTuple, Optional, Union
 
+from absl import logging
 from jax.ad_checkpoint import checkpoint_policies as jax_remat_policies
 
 from axlearn.common import causal_lm, config
@@ -244,6 +245,8 @@ def get_trainer_kwargs(
     max_step = TOTAL_TOKENS[version][model_size] // tokens_per_batch
     max_sequence_length = MAX_SEQUENCE_LENGTH[version]
     train_batch_size = tokens_per_batch // max_sequence_length
+    logging.info("tokens_per_batch %s", tokens_per_batch)
+    logging.info("train_batch_size %s", train_batch_size)
 
     # Whether to use grouped query attention.
     num_kv_heads = None
