@@ -95,7 +95,7 @@ def default_xla_options(
 
         # Rapideye testing
         options.update(
-            megascale_rapideye_error_digest_log_path="gs://tpu-prod-env-multipod-axlearn",
+            megascale_graph_executor_include_telemetry_in_state_summary="false",
             megascale_debug_port=8081,
         )
 
@@ -170,7 +170,6 @@ def default_xla_options(
                 "false",
                 "megachip_tccontrol",
                 "10m",
-                "gs://tpu-prod-env-multipod-axlearn",
             ], (k, v)
 
     return options
