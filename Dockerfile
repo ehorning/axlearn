@@ -92,6 +92,10 @@ RUN uv pip install --prerelease=allow .[core,tpu] && uv cache clean
 RUN if [ -n "$EXTRAS" ]; then uv pip install .[$EXTRAS] && uv cache clean; fi
 COPY . .
 
+FROM gcr.io/cloud-tpu-v2-images-dev/libtpu_lts:libtpu_lts_20250318_rapideye_RC08 AS source_image
+
+COPY --from=source_image libtpu.so /root/libtpu.so
+
 ################################################################################
 # GPU container spec.                                                          #
 ################################################################################
