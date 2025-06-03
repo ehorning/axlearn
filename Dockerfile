@@ -88,13 +88,10 @@ ARG EXTRAS=
 ENV UV_FIND_LINKS=https://storage.googleapis.com/jax-releases/libtpu_releases.html
 # Ensure we install the TPU version, even if building locally.
 # Jax will fallback to CPU when run on a machine without TPU.
+COPY libtpu.so /root/libtpu.so
 RUN uv pip install --prerelease=allow .[core,tpu] && uv cache clean
 RUN if [ -n "$EXTRAS" ]; then uv pip install .[$EXTRAS] && uv cache clean; fi
 COPY . .
-
-FROM gcr.io/cloud-tpu-v2-images-dev/libtpu_lts:libtpu_lts_20250318_rapideye_RC08 AS source_image
-
-COPY --from=source_image libtpu.so /root/libtpu.so
 
 ################################################################################
 # GPU container spec.                                                          #
