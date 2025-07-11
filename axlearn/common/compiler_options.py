@@ -99,6 +99,12 @@ def default_xla_options(
             xla_sc_disable_megacore_partitioning="true",
         )
 
+        # Rapideye testing
+        options.update(
+            megascale_rapid_eye_error_digest_log_path="gs://tpu-prod-env-multipod-axlearn",
+            megascale_debug_port=8081,
+        )
+
         # Collective fusions are mutually exclusive with SparseCore offloading. We enable allgather
         # fusion and allreduce SC offloading by default.
         options.update(
@@ -163,7 +169,15 @@ def default_xla_options(
             int(v)
             continue
         except ValueError:
-            assert v in [True, False, "true", "false", "megachip_tccontrol", "10m"], (k, v)
+            assert v in [
+                True,
+                False,
+                "true",
+                "false",
+                "megachip_tccontrol",
+                "10m",
+                "gs://tpu-prod-env-multipod-axlearn",
+            ], (k, v)
 
     return options
 
