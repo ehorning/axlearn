@@ -68,8 +68,10 @@ _PATHWAYS_HEAD_REPLICATED_JOB_NAME = "pathways-head"
 _PATHWAYS_WORKER_REPLICATED_JOB_NAME = "pathways-worker"
 
 # Add node-selector for cpu workload to avoid sharing nodes with system services.
-_PATHWAYS_HEAD_NODE_POOL_SELECTOR_KEY = "axlearn/nodepool_type"
-_PATHWAYS_HEAD_NODE_POOL_SELECTOR_VALUE = "workload"
+_PATHWAYS_HEAD_NODE_POOL_SELECTORS = {
+    "axlearn/nodepool_type": "workload",
+    "cloud.google.com/compute-class": "pathways-head",
+}
 # The back off limit of pathways pods.
 # Note that the head pod will back of exact this many times.
 # While workers will share #workers * _PATHWAYS_BACK_OFF_LIMIT total times.
@@ -451,9 +453,7 @@ class PathwaysReplicatedJob(BaseReplicatedJob):
                 }
             )
 
-        node_selector = {
-            _PATHWAYS_HEAD_NODE_POOL_SELECTOR_KEY: _PATHWAYS_HEAD_NODE_POOL_SELECTOR_VALUE,
-        }
+        node_selectors = _PATHWAYS_HEAD_NODE_POOL_SELECTORS
 
         head_container = self._build_pathways_head_container()
         init_containers = [
@@ -472,7 +472,7 @@ class PathwaysReplicatedJob(BaseReplicatedJob):
             # Fail if any pod fails, and allow retries to happen at JobSet level.
             "restartPolicy": "Never",
             "hostAliases": [metadata_host_alias],
-            "nodeSelector": node_selector,
+            "nodeSelector": node_selectors,
             "tolerations": tolerations,
             "containers": [head_container],
             "initContainers": init_containers,
@@ -1008,9 +1008,7 @@ class PathwaysLeaderWorkerTemplate(BaseLeaderWorkerTemplate):
                 }
             )
 
-        node_selector = {
-            _PATHWAYS_HEAD_NODE_POOL_SELECTOR_KEY: _PATHWAYS_HEAD_NODE_POOL_SELECTOR_VALUE,
-        }
+        node_selectors = _PATHWAYS_HEAD_NODE_POOL_SELECTORS
 
         containers = [
             self._build_head_container(),
@@ -1026,7 +1024,7 @@ class PathwaysLeaderWorkerTemplate(BaseLeaderWorkerTemplate):
         leader_pod_spec = {
             "terminationGracePeriodSeconds": 60,
             "hostAliases": [metadata_host_alias],
-            "nodeSelector": node_selector,
+            "nodeSelector": node_selectors,
             "tolerations": tolerations,
             "containers": containers,
             "volumes": volumes,
