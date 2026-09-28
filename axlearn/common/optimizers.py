@@ -2167,11 +2167,11 @@ def offload_optimizer(
         # memory spike due the the temporary state in HBM, but the spike is much less than the full
         # memory usage of all states. Moreover, when the optimizer is run, all activations are
         # released, so we have less memory pressure at that point in time.
-        # memory_kind = sharding.memory_kind(dst)
+        memory_space = jax._src.core.mem_kind_to_space(dst)  # pylint: disable=protected-access
         return jax.tree.map(
             lambda path, tensor: (
-                jax.device_put(tensor, tensor.sharding.with_memory_kind(dst))
-                if re.fullmatch(pattern, path) and hasattr(tensor, "sharding")
+                jax.device_put(tensor, memory_space)
+                if re.fullmatch(pattern, path)
                 else tensor
             ),
             tree_paths(state),

@@ -76,8 +76,8 @@ ARG EXTRAS=
 # Ensure we install the TPU version, even if building locally.
 # Jax will fallback to CPU when run on a machine without TPU.
 COPY pyproject.toml README.md /root/
-RUN uv pip install -qq --prerelease=allow .[core,tpu] && uv cache clean
-RUN if [ -n "$EXTRAS" ]; then uv pip install -qq .[$EXTRAS] && uv cache clean; fi
+RUN uv pip install -f https://storage.googleapis.com/axlearn-wheels/wheels.html -f https://storage.googleapis.com/jax-releases/libtpu_releases.html --prerelease=allow .[core,tpu] && uv cache clean
+RUN if [ -n "$EXTRAS" ]; then uv pip install -f https://storage.googleapis.com/axlearn-wheels/wheels.html -f https://storage.googleapis.com/jax-releases/libtpu_releases.html .[$EXTRAS] && uv cache clean; fi
 COPY . .
 
 ################################################################################

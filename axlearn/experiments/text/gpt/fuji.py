@@ -17,7 +17,7 @@ from typing import Any, List, NamedTuple, Optional, Union
 
 from jax.ad_checkpoint import checkpoint_policies as jax_remat_policies
 
-from axlearn.common import causal_lm, config
+from axlearn.common import causal_lm, config, optimizers
 from axlearn.common.attention import (
     BaseStackedTransformerLayer,
     FusedGroupedQKVLinear,
@@ -467,6 +467,17 @@ def get_trainer_kwargs(
                                     ),
                                 }
                             ),
+                        ],
+                    ),
+                ),
+                (
+                    "tpu-v6e-16",
+                    ChainConfigModifier.default_config().set(
+                        config_modifiers=[
+                            MeshShapeModifier.default_config().set(
+                                mesh_shape=mesh_shape_from_axes(data=-1, fsdp=16)
+                            ),
+                            V6eFlashConfigModifier.default_config(),
                         ],
                     ),
                 ),
@@ -1190,6 +1201,19 @@ def trainer_configs(
         if model_size != "test":
             config_map[f"{config_name}-fp8"] = make_fp8_config_func
 
+        def make_offload_opt_config(base_config_name: str) -> SpmdTrainer.Config:
+            """Make an optimizer state offloading variant of the base config."""
+            cfg: SpmdTrainer.Config = config_map[base_config_name]().clone()
+            cfg.learner.optimizer = config_for_function(optimizers.offload_optimizer).set(
+                optimizer=cfg.learner.optimizer
+            )
+            return cfg
+
+        if model_size != "test":
+            config_map[f"{config_name}-offload-opt"] = functools.partial(
+                make_offload_opt_config, config_name
+            )
+
         if model_size == "test":
 
             def wrapper(config_name: str = config_name):
@@ -1208,7 +1232,9 @@ def trainer_configs(
             ] = wrapper
         if model_size in ("1B", "3B", "7B", "8B"):
 
-            def make_single_host_config(base_config_name: str) -> SpmdTrainer.Config:
+            def make_single_host_config(
+                base_config_name: str, *, version: Version = version
+            ) -> SpmdTrainer.Config:
                 """Make a single-host variant of the base config.
 
                 gpu-p5.48xlarge 8x1 step time:
@@ -1220,6 +1246,7 @@ def trainer_configs(
 
                 Args:
                     base_config_name: The multi-host config name.
+                    version: The model Version enum for batch size scaling.
 
                 Returns:
                     A trainer config that can run on a single host.
@@ -1230,7 +1257,6 @@ def trainer_configs(
                 # pytype: enable=annotation-type-mismatch
 
                 # The original config was supposed to run on >= 32 machines.
-                # pylint: disable=cell-var-from-loop
                 cfg.input.input_dispatcher.global_logical_batch_size //= (
                     128 if version in (Version.V3, Version.V3_TIKTOKEN) else 32
                 )
@@ -1238,18 +1264,28 @@ def trainer_configs(
                     evaler.input.input_dispatcher.global_logical_batch_size //= (
                         128 if version in (Version.V3, Version.V3_TIKTOKEN) else 32
                     )
-                # pylint: enable=cell-var-from-loop
                 return cfg
 
             # Make single-host config
-            make_single_host_config_func = functools.partial(make_single_host_config, config_name)
+            make_single_host_config_func = functools.partial(
+                make_single_host_config, config_name, version=version
+            )
             config_map[f"{config_name}-single-host"] = make_single_host_config_func
 
             # Make single-host configs for FP8
             if f"{config_name}-fp8" in config_map:
                 make_single_host_fp8_config_func = functools.partial(
-                    make_single_host_config, f"{config_name}-fp8"
+                    make_single_host_config, f"{config_name}-fp8", version=version
                 )
                 config_map[f"{config_name}-fp8-single-host"] = make_single_host_fp8_config_func
+
+            # Make single-host configs for optimizer offloading
+            if f"{config_name}-offload-opt" in config_map:
+                make_single_host_offload_opt_config_func = functools.partial(
+                    make_single_host_config, f"{config_name}-offload-opt", version=version
+                )
+                config_map[f"{config_name}-offload-opt-single-host"] = (
+                    make_single_host_offload_opt_config_func
+                )
 
     return config_map

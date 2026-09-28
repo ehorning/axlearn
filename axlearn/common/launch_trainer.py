@@ -113,6 +113,11 @@ flags.DEFINE_string(
     None,
     "The mesh selector string. See `SpmdTrainer.Config.mesh_rules` for details.",
 )
+flags.DEFINE_integer(
+    "max_step",
+    None,
+    "If specified, overrides the maximum number of training steps (`trainer_config.max_step`).",
+)
 
 FLAGS = flags.FLAGS
 
@@ -170,6 +175,8 @@ def get_trainer_config(
         )
     if trainer_config.log_every_n_steps is None:
         trainer_config.log_every_n_steps = flag_values.trainer_log_every_n_steps
+    if flag_values.max_step is not None:
+        trainer_config.max_step = flag_values.max_step
     for eval_cfg in trainer_config.evalers.values():
         eval_cfg.trace_at_iters = [int(el) for el in flag_values.eval_trace_at_iters]
     if flag_values.device_monitor == "tpu":
